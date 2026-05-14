@@ -4,9 +4,10 @@ export interface GalleryItem {
   id: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   authorId: string;
   repositoryUrl: string;
+  visualSeed: number;
   x: number;
   y: number;
   status: string;

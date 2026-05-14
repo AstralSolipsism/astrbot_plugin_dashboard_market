@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 import type { GalleryItem } from '../../types/gallery';
+import BalatroBackdrop from './BalatroBackdrop.vue';
 
 const props = defineProps<{
   item: GalleryItem;
@@ -12,6 +13,13 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const cardRef = useTemplateRef<HTMLElement>('card');
+const imageFailed = ref(false);
+const imageLoaded = ref(false);
+const isInteracting = ref(false);
+const isNearViewport = ref(false);
+
+let intersectionObserver: IntersectionObserver | undefined;
 
 const installBadgeLabel = computed(() => {
   switch (props.item.installState) {
@@ -26,22 +34,105 @@ const installBadgeLabel = computed(() => {
   }
 });
 
+const balatroPalette = computed(() => paletteForSeed(props.item.visualSeed));
+const balatroActive = computed(() => isNearViewport.value || isInteracting.value);
+const showImage = computed(() => Boolean(props.item.imageUrl) && imageLoaded.value && !imageFailed.value);
+
+watch(
+  () => props.item.imageUrl,
+  () => {
+    imageFailed.value = false;
+    imageLoaded.value = false;
+  }
+);
+
+onMounted(() => {
+  const card = cardRef.value;
+  if (!card || typeof IntersectionObserver === 'undefined') {
+    isNearViewport.value = true;
+    return;
+  }
+  intersectionObserver = new IntersectionObserver(
+    (entries) => {
+      isNearViewport.value = entries.some((entry) => entry.isIntersecting);
+    },
+    { root: null, rootMargin: '960px' }
+  );
+  intersectionObserver.observe(card);
+});
+
+onBeforeUnmount(() => {
+  intersectionObserver?.disconnect();
+});
+
 function selectItem(): void {
   emit('select', props.item);
+}
+
+function handleImageLoad(): void {
+  imageLoaded.value = true;
+  imageFailed.value = false;
+}
+
+function handleImageError(): void {
+  imageLoaded.value = false;
+  imageFailed.value = true;
+}
+
+function paletteForSeed(seed: number): { color1: string; color2: string; color3: string; pixelFilter: number } {
+  const palettes = [
+    ['#181e57', '#03030a', '#754261'],
+    ['#26413f', '#090b09', '#b75b37'],
+    ['#33214d', '#08050d', '#c69342'],
+    ['#12395f', '#030811', '#6e2f4a'],
+    ['#492a1f', '#0d0705', '#24534d'],
+    ['#24315e', '#070915', '#b94c63']
+  ] as const;
+  const palette = palettes[seed % palettes.length] ?? palettes[0];
+  return {
+    color1: palette[0],
+    color2: palette[1],
+    color3: palette[2],
+    pixelFilter: 620 + (seed % 180)
+  };
 }
 </script>
 
 <template>
   <article
+    ref="card"
     class="gallery-card"
     role="button"
     tabindex="0"
     :aria-label="item.title"
+    @blur.capture="isInteracting = false"
     @click="selectItem"
+    @focus.capture="isInteracting = true"
     @keydown.enter.prevent="selectItem"
     @keydown.space.prevent="selectItem"
+    @pointerenter="isInteracting = true"
+    @pointerleave="isInteracting = false"
   >
-    <img class="gallery-card__image" :alt="item.title" :src="item.imageUrl" draggable="false" />
+    <BalatroBackdrop
+      class="gallery-card__backdrop"
+      :active="balatroActive"
+      :color1="balatroPalette.color1"
+      :color2="balatroPalette.color2"
+      :color3="balatroPalette.color3"
+      :is-rotate="false"
+      :mouse-interaction="true"
+      :pixel-filter="balatroPalette.pixelFilter"
+    />
+    <img
+      v-if="item.imageUrl && !imageFailed"
+      class="gallery-card__image"
+      :class="{ 'is-loaded': showImage }"
+      :alt="item.title"
+      :src="item.imageUrl"
+      draggable="false"
+      @error="handleImageError"
+      @load="handleImageLoad"
+    />
     <div class="gallery-card__shade" aria-hidden="true"></div>
     <span v-if="installBadgeLabel" class="gallery-card__state" :data-state="item.installState">
       {{ installBadgeLabel }}
@@ -101,16 +192,30 @@ function selectItem(): void {
 }
 
 .gallery-card__image {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
   display: block;
   inline-size: 100%;
   block-size: 100%;
   border-radius: inherit;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
   user-select: none;
+}
+
+.gallery-card__image.is-loaded {
+  opacity: 1;
+}
+
+.gallery-card__backdrop {
+  z-index: 0;
 }
 
 .gallery-card__shade {
   position: absolute;
+  z-index: 2;
   inset: 0;
   border-radius: inherit;
   background:
@@ -127,6 +232,7 @@ function selectItem(): void {
 
 .gallery-card__meta {
   position: absolute;
+  z-index: 4;
   inset-inline: 14px;
   inset-block-end: 14px;
   display: flex;
@@ -139,6 +245,7 @@ function selectItem(): void {
 .gallery-card__state,
 .gallery-card__warning {
   position: absolute;
+  z-index: 5;
   inset-block-start: 14px;
   display: inline-flex;
   max-inline-size: 178px;
