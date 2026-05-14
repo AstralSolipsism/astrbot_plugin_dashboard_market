@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { openExternalUrl as openExternal } from '../../lib/openExternal';
 import { computed } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 
@@ -50,7 +51,7 @@ function formatTimestamp(value: string): string {
         {{ languageTargetLabel }}
       </button>
     </nav>
-    <a class="gallery-nav__github" :aria-label="t('nav.githubRepo')" :href="repoUrl" rel="noreferrer" target="_blank">
+    <a class="gallery-nav__github" :aria-label="t('nav.githubRepo')" :href="repoUrl" rel="noreferrer" target="_blank" @click.prevent.stop="openExternal(repoUrl)">
       <svg aria-hidden="true" class="gallery-nav__github-icon" viewBox="0 0 24 24">
         <path
           clip-rule="evenodd"

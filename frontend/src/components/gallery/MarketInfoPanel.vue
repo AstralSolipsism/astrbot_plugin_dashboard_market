@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { openExternalUrl as openExternal } from '../../lib/openExternal';
 import { computed } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 import ModalShell from '../ModalShell.vue';
@@ -56,8 +57,8 @@ function formatTimestamp(value: string): string {
 
         <nav class="market-info-panel__actions" :aria-label="t('info.dialogLabel')">
           <button type="button" data-autofocus @click="emit('submit')">{{ t('info.submit') }}</button>
-          <a :href="repoUrl" rel="noreferrer" target="_blank">{{ t('info.source') }}</a>
-          <a :href="registryUrl" rel="noreferrer" target="_blank">{{ t('info.registry') }}</a>
+          <a :href="repoUrl" rel="noreferrer" target="_blank" @click.prevent.stop="openExternal(repoUrl)">{{ t('info.source') }}</a>
+          <a :href="registryUrl" rel="noreferrer" target="_blank" @click.prevent.stop="openExternal(registryUrl)">{{ t('info.registry') }}</a>
         </nav>
       </header>
 
