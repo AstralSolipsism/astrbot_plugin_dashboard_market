@@ -27,13 +27,13 @@ export function useRegistry() {
   const registry = ref<DashboardRegistry>(fallbackRegistry);
   const loading = ref(true);
   const error = ref('');
-  const selectedId = ref('');
+  const selectedKey = ref('');
   const marketStatus = ref<MarketStatus>({});
   const status = ref<PluginDashboardStatus | undefined>();
 
   const dashboards = computed(() => registry.value.dashboards);
   const selectedDashboard = computed<DashboardRegistryVersion | undefined>(() =>
-    dashboards.value.find((dashboard) => dashboard.id === selectedId.value) ?? dashboards.value[0]
+    dashboards.value.find((dashboard) => dashboardKey(dashboard) === selectedKey.value) ?? dashboards.value[0]
   );
   const stats = computed(() => {
     const passed = dashboards.value.filter((dashboard) => dashboard.verification.status === 'passed').length;
@@ -63,12 +63,12 @@ export function useRegistry() {
       if (payload.cached && payload.error) {
         error.value = payload.error;
       }
-      selectedId.value = registry.value.dashboards[0]?.id ?? '';
+      selectedKey.value = dashboardKey(registry.value.dashboards[0]);
       await loadStatus();
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
       registry.value = fallbackRegistry;
-      selectedId.value = '';
+      selectedKey.value = '';
       await loadStatus();
     } finally {
       loading.value = false;
@@ -76,7 +76,7 @@ export function useRegistry() {
   }
 
   function selectDashboard(dashboard: DashboardRegistryVersion): void {
-    selectedId.value = dashboard.id;
+    selectedKey.value = dashboardKey(dashboard);
   }
 
   async function loadStatus(): Promise<void> {
@@ -103,4 +103,8 @@ export function useRegistry() {
     status,
     stats
   };
+}
+
+function dashboardKey(dashboard: Pick<DashboardRegistryVersion, 'id' | 'version'> | undefined): string {
+  return dashboard ? `${dashboard.id}@${dashboard.version}` : '';
 }

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import ssl
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -55,7 +56,7 @@ def installable_dashboards(
     dashboards: list[dict[str, Any]],
     current_astrbot_version: str,
 ) -> list[dict[str, Any]]:
-    result: list[dict[str, Any]] = []
+    installable: list[dict[str, Any]] = []
     for dashboard in dashboards:
         try:
             selected = select_installable_dashboard(
@@ -66,8 +67,8 @@ def installable_dashboards(
             )
         except DashboardNotInstallableError:
             continue
-        result.append(selected)
-    return result
+        installable.append(selected)
+    return _current_dashboard_versions(installable)
 
 
 def artifact_url(dashboard: dict[str, Any]) -> str:
@@ -94,6 +95,41 @@ def _is_version_compatible(specifier: Any, current_version: str) -> bool:
     except (InvalidSpecifier, InvalidVersion):
         return False
     return spec.contains(version, prereleases=True)
+
+
+def _current_dashboard_versions(dashboards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    selected: dict[str, dict[str, Any]] = {}
+    for dashboard in dashboards:
+        dashboard_id = str(dashboard.get("id", ""))
+        if not dashboard_id:
+            continue
+        current = selected.get(dashboard_id)
+        if current is None or _dashboard_sort_key(dashboard) > _dashboard_sort_key(current):
+            selected[dashboard_id] = dashboard
+    return list(selected.values())
+
+
+def _dashboard_sort_key(dashboard: dict[str, Any]) -> tuple[float, Version]:
+    return (
+        _verified_at_timestamp(dashboard.get("verification", {}).get("verifiedAt")),
+        _version_key(str(dashboard.get("version", ""))),
+    )
+
+
+def _verified_at_timestamp(value: Any) -> float:
+    if not isinstance(value, str) or not value.strip():
+        return float("-inf")
+    try:
+        return datetime.fromisoformat(value.strip().replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return float("-inf")
+
+
+def _version_key(version: str) -> Version:
+    try:
+        return Version(version.strip().lstrip("vV"))
+    except InvalidVersion:
+        return Version("0")
 
 
 def _normalize_specifier_set(specifier: str) -> str:

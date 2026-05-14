@@ -67,6 +67,7 @@ class _FakeLogger:
 
 _install_import_stubs()
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+market_module = importlib.import_module("astrbot_plugin_dashboard_market.dashboard_market.market")
 plugin_main = importlib.import_module("astrbot_plugin_dashboard_market.main")
 
 
@@ -99,6 +100,32 @@ class DashboardMarketPluginHandlerTests(unittest.TestCase):
         self.assertIn("install exploded", response["message"])
 
 
+class DashboardMarketSelectionTests(unittest.TestCase):
+    def test_installable_dashboards_keeps_latest_published_version_per_id(self):
+        dashboards = [
+            _dashboard("demo", "0.1.0", "2026-05-13T12:42:50.430Z"),
+            _dashboard("demo", "0.1.1", "2026-05-14T09:08:17.381Z"),
+            _dashboard("other", "1.0.0", "2026-05-12T00:00:00.000Z"),
+        ]
+
+        result = market_module.installable_dashboards(dashboards, "4.24.2")
+
+        self.assertEqual(
+            [(dashboard["id"], dashboard["version"]) for dashboard in result],
+            [("demo", "0.1.1"), ("other", "1.0.0")],
+        )
+
+    def test_select_installable_dashboard_stays_exact_by_id_and_version(self):
+        dashboards = [
+            _dashboard("demo", "0.1.0", "2026-05-13T12:42:50.430Z"),
+            _dashboard("demo", "0.1.1", "2026-05-14T09:08:17.381Z"),
+        ]
+
+        selected = market_module.select_installable_dashboard(dashboards, "demo", "0.1.0", "4.24.2")
+
+        self.assertEqual(selected["version"], "0.1.0")
+
+
 def _async_payload(payload):
     async def inner():
         return payload
@@ -117,6 +144,24 @@ class _StatusFailingInstallService:
 class _UnexpectedInstallFailureService:
     async def install(self, dashboard_id, version):
         raise RuntimeError("install exploded")
+
+
+def _dashboard(dashboard_id, version, verified_at):
+    return {
+        "id": dashboard_id,
+        "version": version,
+        "verification": {
+            "status": "passed",
+            "verifiedAt": verified_at,
+        },
+        "compatibility": {
+            "astrbot": ">=4.24.2 <4.25.0",
+        },
+        "artifact": {
+            "url": f"https://example.com/{dashboard_id}-{version}.zip",
+            "sha256": "a" * 64,
+        },
+    }
 
 
 if __name__ == "__main__":
