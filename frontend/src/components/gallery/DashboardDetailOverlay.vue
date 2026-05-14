@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { openExternalUrl as openExternal } from '../../lib/openExternal';
 import { computed } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 import { dashboardInstallKey } from '../../lib/installState';
@@ -9,6 +10,7 @@ import type {
   DashboardRegistryVersion,
   MediaAsset
 } from '../../types/market';
+import DashboardPreviewCarousel from './DashboardPreviewCarousel.vue';
 import ModalShell from '../ModalShell.vue';
 
 const props = withDefaults(
@@ -33,6 +35,7 @@ const dashboard = computed(() => props.item?.dashboard);
 const cover = computed(() => dashboard.value?.media.effectiveCover);
 const screenshots = computed(() => dashboard.value?.media.effectiveScreenshots ?? []);
 const coverUrl = computed(() => mediaAssetUrl(cover.value) || props.item?.imageUrl || '');
+const previewAssets = computed(() => screenshots.value);
 const coverage = computed(() => dashboard.value?.verification.coverage);
 const authors = computed(() => dashboard.value?.project.authors.map((author) => author.name).join(', ') ?? '');
 const reportUrl = computed(() => coverage.value?.reportUrl ?? dashboard.value?.verification.report);
@@ -97,13 +100,16 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
     :close-label="t('detail.close')"
     :open="Boolean(dashboard)"
     size="wide"
+    tone="market"
     @close="close"
   >
     <article v-if="dashboard" class="dashboard-detail">
       <header class="dashboard-detail__header">
         <div class="dashboard-detail__cover">
-          <img v-if="cover" :alt="cover.alt" :src="coverUrl" />
-          <img v-else :alt="props.item?.title" :src="coverUrl" />
+          <img v-if="coverUrl" :alt="cover?.alt ?? props.item?.title" :src="coverUrl" />
+          <div v-else class="dashboard-detail__cover-empty">
+            {{ t('detail.previewEmpty') }}
+          </div>
         </div>
 
         <div class="dashboard-detail__intro">
@@ -132,77 +138,73 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
             >
               {{ installLabel }}
             </button>
-            <a :href="dashboard.source.repo" rel="noreferrer" target="_blank">{{ t('detail.source') }}</a>
-            <a :href="dashboard.project.homepage" rel="noreferrer" target="_blank">{{ t('detail.homepage') }}</a>
-            <a v-if="reportUrl" :href="reportUrl" rel="noreferrer" target="_blank">{{ t('detail.report') }}</a>
+            <a :href="dashboard.source.repo" rel="noreferrer" target="_blank" @click.prevent.stop="openExternal(dashboard.source.repo)">{{ t('detail.source') }}</a>
+            <a :href="dashboard.project.homepage" rel="noreferrer" target="_blank" @click.prevent.stop="openExternal(dashboard.project.homepage)">{{ t('detail.homepage') }}</a>
+            <a v-if="reportUrl" :href="reportUrl" rel="noreferrer" target="_blank" @click.prevent.stop="openExternal(reportUrl)">{{ t('detail.report') }}</a>
           </div>
         </div>
       </header>
 
       <div class="dashboard-detail__content">
-        <section class="dashboard-detail__section" :aria-label="t('detail.compatibility')">
-          <h3>{{ t('detail.compatibility') }}</h3>
-          <dl class="dashboard-detail__facts">
-            <div>
-              <dt>{{ t('detail.astrbot') }}</dt>
-              <dd>{{ dashboard.compatibility.astrbot }}</dd>
-            </div>
-            <div>
-              <dt>{{ t('detail.contract') }}</dt>
-              <dd>{{ dashboard.compatibility.contract }}</dd>
-            </div>
-            <div>
-              <dt>{{ t('detail.authors') }}</dt>
-              <dd>{{ authors }}</dd>
-            </div>
-          </dl>
-        </section>
+        <div class="dashboard-detail__info-grid">
+          <section class="dashboard-detail__section" :aria-label="t('detail.compatibility')">
+            <h3>{{ t('detail.compatibility') }}</h3>
+            <dl class="dashboard-detail__facts">
+              <div>
+                <dt>{{ t('detail.astrbot') }}</dt>
+                <dd>{{ dashboard.compatibility.astrbot }}</dd>
+              </div>
+              <div>
+                <dt>{{ t('detail.contract') }}</dt>
+                <dd>{{ dashboard.compatibility.contract }}</dd>
+              </div>
+              <div>
+                <dt>{{ t('detail.authors') }}</dt>
+                <dd>{{ authors }}</dd>
+              </div>
+            </dl>
+          </section>
 
-        <section class="dashboard-detail__section" :aria-label="t('detail.package')">
-          <h3>{{ t('detail.package') }}</h3>
-          <dl class="dashboard-detail__facts">
-            <div>
-              <dt>{{ t('detail.sha256') }}</dt>
-              <dd class="dashboard-detail__hash">{{ dashboard.artifact.sha256 }}</dd>
-            </div>
-            <div>
-              <dt>{{ t('detail.mirror') }}</dt>
-              <dd>{{ mirrorStatus }}</dd>
-            </div>
-            <div>
-              <dt>{{ t('detail.mediaMirror') }}</dt>
-              <dd>{{ mediaStatus }}</dd>
-            </div>
-          </dl>
-        </section>
+          <section class="dashboard-detail__section" :aria-label="t('detail.package')">
+            <h3>{{ t('detail.package') }}</h3>
+            <dl class="dashboard-detail__facts">
+              <div>
+                <dt>{{ t('detail.sha256') }}</dt>
+                <dd class="dashboard-detail__hash">{{ dashboard.artifact.sha256 }}</dd>
+              </div>
+              <div>
+                <dt>{{ t('detail.mirror') }}</dt>
+                <dd>{{ mirrorStatus }}</dd>
+              </div>
+              <div>
+                <dt>{{ t('detail.mediaMirror') }}</dt>
+                <dd>{{ mediaStatus }}</dd>
+              </div>
+            </dl>
+          </section>
 
-        <section v-if="coverage" class="dashboard-detail__section" :aria-label="t('detail.coverageLabel')">
-          <h3>{{ t('detail.coverage') }}</h3>
-          <div class="dashboard-detail__coverage">
-            <span>
-              {{
-                t('detail.capabilities', {
-                  covered: coverage.coveredCapabilities,
-                  required: coverage.requiredCapabilities
-                })
-              }}
-            </span>
-            <span>{{ t('detail.apis', { covered: coverage.coveredApis, required: coverage.requiredApis }) }}</span>
-            <span>{{ statusLabel(coverage.status) }}</span>
+          <section v-if="coverage" class="dashboard-detail__section" :aria-label="t('detail.coverageLabel')">
+            <h3>{{ t('detail.coverage') }}</h3>
+            <div class="dashboard-detail__coverage">
+              <span>
+                {{
+                  t('detail.capabilities', {
+                    covered: coverage.coveredCapabilities,
+                    required: coverage.requiredCapabilities
+                  })
+                }}
+              </span>
+              <span>{{ t('detail.apis', { covered: coverage.coveredApis, required: coverage.requiredApis }) }}</span>
+              <span>{{ statusLabel(coverage.status) }}</span>
+            </div>
+          </section>
+        </div>
+
+        <section class="dashboard-detail__section dashboard-detail__section--previews" :aria-label="t('detail.previewsLabel')">
+          <div class="dashboard-detail__section-heading">
+            <h3>{{ t('detail.previews') }}</h3>
           </div>
-        </section>
-
-        <section v-if="screenshots.length > 0" class="dashboard-detail__section" :aria-label="t('detail.previewsLabel')">
-          <h3>{{ t('detail.previews') }}</h3>
-          <div class="dashboard-detail__preview-list">
-            <figure v-for="asset in screenshots" :key="asset.url">
-              <img :alt="asset.alt" :src="mediaAssetUrl(asset)" />
-              <figcaption>
-                {{ asset.label ?? asset.route ?? asset.viewport ?? asset.source }}
-                <span v-if="asset.mirrorStatus === 'failed'">{{ t('detail.mediaMirrorFailed') }}</span>
-              </figcaption>
-            </figure>
-          </div>
+          <DashboardPreviewCarousel :assets="previewAssets" />
         </section>
       </div>
     </article>
@@ -213,26 +215,37 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
 .dashboard-detail {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  block-size: min(780px, calc(100dvh - 36px));
+  block-size: min(820px, calc(100dvh - 36px));
   min-block-size: 0;
+  background:
+    radial-gradient(circle at 12% 0%, oklch(0.62 0.13 205 / 12%), transparent 32%),
+    radial-gradient(circle at 88% 10%, oklch(0.62 0.08 86 / 10%), transparent 28%);
+  color: oklch(0.92 0.018 215);
 }
 
 .dashboard-detail__header {
   display: grid;
-  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1fr);
-  gap: 18px;
-  padding: 18px 62px 16px 18px;
-  border-block-end: 1px solid oklch(0.86 0.006 110);
-  background: oklch(0.98 0.006 110);
+  grid-template-columns: minmax(190px, 248px) minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px 58px 12px 14px;
+  border-block-end: 1px solid oklch(0.7 0.1 205 / 18%);
+  background:
+    linear-gradient(180deg, oklch(0.12 0.028 242 / 72%), oklch(0.07 0.019 248 / 52%)),
+    radial-gradient(circle at 24% 0%, oklch(0.68 0.14 205 / 12%), transparent 34%);
 }
 
 .dashboard-detail__cover {
   overflow: hidden;
   align-self: start;
-  aspect-ratio: 16 / 10;
-  border: 1px solid oklch(0.84 0.006 110);
-  border-radius: 8px;
-  background: oklch(0.92 0.006 110);
+  aspect-ratio: 16 / 9;
+  border: 1px solid oklch(0.7 0.11 205 / 24%);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 28% 22%, oklch(0.66 0.13 205 / 18%), transparent 32%),
+    oklch(0.045 0.016 250);
+  box-shadow:
+    0 18px 44px oklch(0.02 0.018 255 / 34%),
+    inset 0 1px 0 oklch(0.86 0.08 205 / 10%);
 }
 
 .dashboard-detail__cover img {
@@ -242,18 +255,28 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   object-fit: cover;
 }
 
+.dashboard-detail__cover-empty {
+  display: grid;
+  block-size: 100%;
+  min-block-size: 136px;
+  place-items: center;
+  color: oklch(0.78 0.06 210);
+  font-size: 12px;
+  font-weight: 720;
+}
+
 .dashboard-detail__intro {
   display: grid;
   min-inline-size: 0;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
 }
 
 .dashboard-detail__badges,
 .dashboard-detail__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dashboard-detail__state,
@@ -261,7 +284,7 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
 .dashboard-detail__version {
   display: inline-flex;
   max-inline-size: 100%;
-  min-block-size: 28px;
+  min-block-size: 26px;
   align-items: center;
   border-radius: 999px;
   overflow: hidden;
@@ -269,53 +292,55 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   font-weight: 760;
   letter-spacing: 0;
   line-height: 1;
-  padding-inline: 10px;
+  padding-inline: 9px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .dashboard-detail__state {
-  background: oklch(0.91 0.006 110);
-  color: oklch(0.36 0.006 110);
+  border: 1px solid oklch(0.72 0.1 205 / 18%);
+  background: oklch(0.12 0.022 245 / 78%);
+  color: oklch(0.82 0.046 210);
 }
 
 .dashboard-detail__state[data-state="current"] {
-  background: oklch(0.9 0.055 150);
-  color: oklch(0.27 0.08 150);
+  background: oklch(0.74 0.13 205 / 20%);
+  color: oklch(0.9 0.07 205);
 }
 
 .dashboard-detail__state[data-state="restartRequired"] {
-  background: oklch(0.94 0.052 78);
-  color: oklch(0.34 0.07 70);
+  background: oklch(0.76 0.1 78 / 22%);
+  color: oklch(0.88 0.09 84);
 }
 
 .dashboard-detail__status,
 .dashboard-detail__version {
-  background: oklch(0.93 0.006 110);
-  color: oklch(0.36 0.006 110);
+  border: 1px solid oklch(0.72 0.1 205 / 16%);
+  background: oklch(0.1 0.02 245 / 72%);
+  color: oklch(0.78 0.042 214);
 }
 
 .dashboard-detail__status[data-status="passed"] {
-  background: oklch(0.91 0.045 150);
-  color: oklch(0.32 0.08 150);
+  background: oklch(0.7 0.13 205 / 18%);
+  color: oklch(0.9 0.07 205);
 }
 
 .dashboard-detail__status[data-status="failed"] {
-  background: oklch(0.92 0.055 28);
-  color: oklch(0.38 0.095 28);
+  background: oklch(0.62 0.13 28 / 20%);
+  color: oklch(0.82 0.11 32);
 }
 
 .dashboard-detail__title {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-inline-size: 0;
 }
 
 .dashboard-detail__title h2 {
   margin: 0;
   overflow-wrap: anywhere;
-  color: oklch(0.16 0.004 110);
-  font-size: 30px;
+  color: oklch(0.96 0.018 215);
+  font-size: 26px;
   font-weight: 780;
   letter-spacing: 0;
   line-height: 1.08;
@@ -325,9 +350,9 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   margin: 0;
   max-inline-size: 62ch;
   overflow-wrap: anywhere;
-  color: oklch(0.39 0.006 110);
-  font-size: 14px;
-  line-height: 1.5;
+  color: oklch(0.74 0.038 214);
+  font-size: 12px;
+  line-height: 1.42;
 }
 
 .dashboard-detail__actions {
@@ -337,33 +362,33 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
 .dashboard-detail__actions a,
 .dashboard-detail__actions button {
   display: inline-flex;
-  min-block-size: 38px;
+  min-block-size: 34px;
   align-items: center;
   justify-content: center;
-  border: 1px solid oklch(0.2 0.004 110);
+  border: 1px solid oklch(0.76 0.12 205 / 28%);
   border-radius: 999px;
-  background: oklch(0.18 0.004 110);
-  color: oklch(0.98 0.006 110);
+  background: oklch(0.7 0.13 205);
+  color: oklch(0.04 0.016 245);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 760;
   letter-spacing: 0;
-  padding-inline: 15px;
+  padding-inline: 13px;
   text-decoration: none;
 }
 
 .dashboard-detail__actions a {
-  background: oklch(0.985 0.006 110);
-  color: oklch(0.17 0.004 110);
+  background: oklch(0.08 0.02 245 / 72%);
+  color: oklch(0.88 0.06 205);
 }
 
 .dashboard-detail__actions a:hover,
 .dashboard-detail__actions a:focus-visible,
 .dashboard-detail__actions button:hover,
 .dashboard-detail__actions button:focus-visible {
-  background: oklch(0.27 0.006 110);
-  color: oklch(0.98 0.006 110);
+  background: oklch(0.9 0.08 205);
+  color: oklch(0.035 0.016 245);
 }
 
 .dashboard-detail__actions button:disabled {
@@ -373,24 +398,52 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
 
 .dashboard-detail__content {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-block-size: 0;
-  gap: 14px;
-  overflow-y: auto;
+  gap: 12px;
+  overflow: hidden;
   overscroll-behavior: contain;
-  padding: 16px 18px 18px;
+  padding: 12px 14px 14px;
+  scrollbar-color: oklch(0.7 0.13 205 / 44%) transparent;
+}
+
+.dashboard-detail__info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-inline-size: 0;
 }
 
 .dashboard-detail__section {
   display: grid;
   gap: 10px;
+  min-inline-size: 0;
+  border: 1px solid oklch(0.7 0.1 205 / 16%);
+  border-radius: 12px;
+  background: oklch(0.065 0.017 248 / 58%);
+  box-shadow: inset 0 1px 0 oklch(0.86 0.08 205 / 6%);
+  padding: 8px;
+}
+
+.dashboard-detail__section--previews {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-block-size: 0;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.dashboard-detail__section-heading {
+  padding-inline: 2px;
 }
 
 .dashboard-detail__section h3 {
   margin: 0;
-  color: oklch(0.22 0.004 110);
-  font-size: 14px;
+  color: oklch(0.9 0.06 205);
+  font-size: 12px;
   font-weight: 780;
-  letter-spacing: 0;
+  letter-spacing: 0.01em;
 }
 
 .dashboard-detail__facts {
@@ -398,22 +451,22 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   gap: 1px;
   overflow: hidden;
   margin: 0;
-  border: 1px solid oklch(0.84 0.006 110);
-  border-radius: 8px;
-  background: oklch(0.84 0.006 110);
+  border: 1px solid oklch(0.7 0.1 205 / 16%);
+  border-radius: 10px;
+  background: oklch(0.7 0.1 205 / 12%);
 }
 
 .dashboard-detail__facts div {
   display: grid;
-  grid-template-columns: 132px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 10px;
   align-items: start;
-  background: oklch(0.985 0.006 110);
+  background: oklch(0.055 0.016 248 / 86%);
   padding: 12px 14px;
 }
 
 .dashboard-detail__facts dt {
-  color: oklch(0.46 0.006 110);
+  color: oklch(0.66 0.05 210);
   font-size: 12px;
   font-weight: 720;
 }
@@ -422,8 +475,8 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   min-inline-size: 0;
   margin: 0;
   overflow-wrap: anywhere;
-  color: oklch(0.2 0.004 110);
-  font-size: 13px;
+  color: oklch(0.88 0.025 215);
+  font-size: 12px;
   font-weight: 620;
   line-height: 1.38;
 }
@@ -435,55 +488,24 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
 .dashboard-detail__coverage {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .dashboard-detail__coverage span {
   display: grid;
-  min-block-size: 66px;
+  min-block-size: 42px;
   place-items: center;
-  border: 1px solid oklch(0.84 0.006 110);
-  border-radius: 8px;
-  background: oklch(0.965 0.006 110);
-  color: oklch(0.25 0.005 110);
+  border: 1px solid oklch(0.7 0.1 205 / 18%);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 28% 20%, oklch(0.7 0.13 205 / 12%), transparent 42%),
+    oklch(0.055 0.016 248 / 82%);
+  color: oklch(0.86 0.04 214);
   font-size: 12px;
   font-weight: 720;
   line-height: 1.3;
-  padding: 10px;
+  padding: 8px;
   text-align: center;
-}
-
-.dashboard-detail__preview-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-
-.dashboard-detail__preview-list figure {
-  overflow: hidden;
-  margin: 0;
-  border: 1px solid oklch(0.84 0.006 110);
-  border-radius: 8px;
-  background: oklch(0.955 0.006 110);
-}
-
-.dashboard-detail__preview-list img {
-  display: block;
-  inline-size: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-}
-
-.dashboard-detail__preview-list figcaption {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 9px 11px;
-  overflow-wrap: anywhere;
-  color: oklch(0.45 0.005 110);
-  font-size: 12px;
-  font-weight: 640;
-  letter-spacing: 0;
 }
 
 @media (max-width: 760px) {

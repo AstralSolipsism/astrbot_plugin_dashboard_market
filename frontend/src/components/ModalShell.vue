@@ -8,9 +8,11 @@ const props = withDefaults(
     labelledBy?: string;
     open: boolean;
     size?: 'narrow' | 'medium' | 'wide';
+    tone?: 'default' | 'market';
   }>(),
   {
-    size: 'medium'
+    size: 'medium',
+    tone: 'default'
   }
 );
 
@@ -135,7 +137,7 @@ function restoreFocus(): void {
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-shell" data-no-pan="true" @click.self="close">
+    <div v-if="open" class="modal-shell" :data-tone="tone" data-no-pan="true" @click.self="close">
       <section
         ref="panel"
         class="modal-shell__panel"
@@ -143,6 +145,7 @@ function restoreFocus(): void {
         :aria-labelledby="labelledBy"
         aria-modal="true"
         :data-size="size"
+        :data-tone="tone"
         role="dialog"
         tabindex="-1"
         @keydown="onKeydown"
@@ -169,6 +172,14 @@ function restoreFocus(): void {
   backdrop-filter: blur(14px);
 }
 
+.modal-shell[data-tone="market"] {
+  background:
+    radial-gradient(circle at 20% 8%, oklch(0.62 0.14 205 / 18%), transparent 34%),
+    radial-gradient(circle at 78% 12%, oklch(0.66 0.08 86 / 12%), transparent 30%),
+    oklch(0.035 0.018 248 / 78%);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
 .modal-shell__panel {
   --modal-width: 720px;
   position: relative;
@@ -191,6 +202,18 @@ function restoreFocus(): void {
 
 .modal-shell__panel[data-size="wide"] {
   --modal-width: 1120px;
+}
+
+.modal-shell__panel[data-tone="market"] {
+  border-color: oklch(0.72 0.105 205 / 28%);
+  background:
+    linear-gradient(145deg, oklch(0.1 0.026 242 / 94%), oklch(0.055 0.018 250 / 96%)),
+    radial-gradient(circle at 16% 0%, oklch(0.72 0.12 205 / 16%), transparent 32%);
+  box-shadow:
+    0 32px 100px oklch(0.015 0.02 255 / 62%),
+    0 0 72px oklch(0.64 0.13 205 / 10%),
+    inset 0 1px 0 oklch(0.86 0.08 205 / 12%);
+  color: oklch(0.94 0.018 215);
 }
 
 .modal-shell__close {
@@ -218,6 +241,19 @@ function restoreFocus(): void {
 .modal-shell__close:focus-visible {
   background: oklch(0.18 0.004 110);
   color: oklch(0.98 0.006 110);
+}
+
+.modal-shell__panel[data-tone="market"] .modal-shell__close {
+  border-color: oklch(0.74 0.12 205 / 28%);
+  background: oklch(0.09 0.022 245 / 72%);
+  box-shadow: inset 0 1px 0 oklch(0.86 0.08 205 / 12%);
+  color: oklch(0.9 0.07 205);
+}
+
+.modal-shell__panel[data-tone="market"] .modal-shell__close:hover,
+.modal-shell__panel[data-tone="market"] .modal-shell__close:focus-visible {
+  background: oklch(0.72 0.13 205);
+  color: oklch(0.05 0.016 245);
 }
 
 @keyframes modal-enter {
