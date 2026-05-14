@@ -4,6 +4,7 @@ import type { DashboardInstallDisplayState, DashboardRegistryVersion, MediaAsset
 import { useI18n } from '../../composables/useI18n';
 import { useInfiniteCanvas } from '../../composables/useInfiniteCanvas';
 import type { GalleryItem } from '../../types/gallery';
+import GalaxyBackdrop from './GalaxyBackdrop.vue';
 import GalleryCard from './GalleryCard.vue';
 import GalleryHero from './GalleryHero.vue';
 import { hasMediaMirrorFailure, mediaAssetUrl } from '../../lib/media';
@@ -316,12 +317,24 @@ function selectItem(item: GalleryItem): void {
     @pointercancel="onPointerUp"
     @wheel="onWheel"
   >
+    <GalaxyBackdrop
+      class="gallery-canvas__galaxy"
+      :auto-center-repulsion="1"
+      :density="1.2"
+      :glow-intensity="0.6"
+      :hue-shift="120"
+      :mouse-interaction="true"
+      :mouse-repulsion="false"
+      :repulsion-strength="2"
+      :rotation-speed="0.1"
+      :saturation="0.6"
+      :speed="1"
+      :star-speed="0.5"
+      :twinkle-intensity="0.6"
+    />
     <div class="gallery-canvas__grid" aria-hidden="true"></div>
     <div class="gallery-canvas__plane" :style="planeStyle">
       <GalleryHero
-        :loading="loading"
-        :passed="stats.passed"
-        :total="stats.total"
         @browse="emit('browse')"
         @submit="emit('submit')"
       />
@@ -351,7 +364,7 @@ function selectItem(item: GalleryItem): void {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: oklch(0.97 0.006 110);
+  background: oklch(0.08 0.018 245);
   cursor: grab;
   touch-action: none;
 }
@@ -362,17 +375,19 @@ function selectItem(item: GalleryItem): void {
 
 .gallery-canvas__grid {
   position: absolute;
+  z-index: 1;
   inset: -200%;
   background-image:
-    linear-gradient(oklch(0.56 0.006 110 / 6%) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.56 0.006 110 / 6%) 1px, transparent 1px);
+    linear-gradient(oklch(0.88 0.018 210 / 8%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.88 0.018 210 / 8%) 1px, transparent 1px);
   background-size: var(--gallery-grid-x) var(--gallery-grid-y);
-  opacity: 0.18;
+  opacity: 0.34;
   pointer-events: none;
 }
 
 .gallery-canvas__plane {
   position: absolute;
+  z-index: 2;
   inset-block-start: 50%;
   inset-inline-start: 50%;
   inline-size: 0;
@@ -380,6 +395,10 @@ function selectItem(item: GalleryItem): void {
   transform: translate3d(var(--pan-x), var(--pan-y), 0);
   transform-origin: center;
   will-change: transform;
+}
+
+.gallery-canvas__galaxy {
+  z-index: 0;
 }
 
 .gallery-canvas__node {
