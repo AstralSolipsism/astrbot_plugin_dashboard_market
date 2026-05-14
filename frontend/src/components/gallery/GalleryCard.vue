@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { openExternalUrl as openExternal } from '../../lib/openExternal';
+import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 import type { GalleryItem } from '../../types/gallery';
 import BalatroBackdrop from './BalatroBackdrop.vue';
@@ -14,12 +15,19 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const cardRef = useTemplateRef<HTMLElement>('card');
-const imageFailed = ref(false);
-const imageLoaded = ref(false);
-const isInteracting = ref(false);
-const isNearViewport = ref(false);
+const imageFailed = shallowRef(false);
+const imageLoaded = shallowRef(false);
+const isInteracting = shallowRef(false);
+const isNearViewport = shallowRef(false);
+const revealDone = shallowRef(false);
+const revealProgress = shallowRef(0);
 
 let intersectionObserver: IntersectionObserver | undefined;
+let revealFrameId = 0;
+let revealTimeoutId = 0;
+
+const revealDurationMs = 2760;
+const revealDoneDelayMs = 2800;
 
 const installBadgeLabel = computed(() => {
   switch (props.item.installState) {
@@ -34,16 +42,31 @@ const installBadgeLabel = computed(() => {
   }
 });
 
-const balatroPalette = computed(() => paletteForSeed(props.item.visualSeed));
-const balatroActive = computed(() => isNearViewport.value || isInteracting.value);
 const showImage = computed(() => Boolean(props.item.imageUrl) && imageLoaded.value && !imageFailed.value);
+const balatroPalette = {
+  color1: '#06b6d4',
+  color2: '#b8b096',
+  color3: '#000000'
+};
+const balatroVisible = computed(() => !showImage.value || !revealDone.value);
+const balatroActive = computed(() => balatroVisible.value && (isNearViewport.value || isInteracting.value));
+const imageRevealStyle = computed<Record<string, string>>(() => {
+  const clipPath = imageClipPath.value;
+  return {
+    clipPath,
+    WebkitClipPath: clipPath
+  };
+});
+const imageClipPath = computed(() => {
+  if (!showImage.value) {
+    return 'polygon(50% 50%, 50% 50%, 50% 50%)';
+  }
+  return createSpiralClipPath(revealProgress.value);
+});
 
 watch(
   () => props.item.imageUrl,
-  () => {
-    imageFailed.value = false;
-    imageLoaded.value = false;
-  }
+  () => resetImageState()
 );
 
 onMounted(() => {
@@ -63,6 +86,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   intersectionObserver?.disconnect();
+  cancelRevealTimers();
 });
 
 function selectItem(): void {
@@ -72,29 +96,102 @@ function selectItem(): void {
 function handleImageLoad(): void {
   imageLoaded.value = true;
   imageFailed.value = false;
+  revealProgress.value = 0;
+  revealDone.value = false;
+  cancelRevealTimers();
+  if (prefersReducedMotion()) {
+    revealProgress.value = 1;
+    revealDone.value = true;
+    return;
+  }
+  const startedAt = performance.now();
+  const updateReveal = (time: number) => {
+    const rawProgress = clamp((time - startedAt) / revealDurationMs, 0, 1);
+    revealProgress.value = easeInOutCubic(rawProgress);
+    if (rawProgress < 1) {
+      revealFrameId = requestAnimationFrame(updateReveal);
+      return;
+    }
+    revealProgress.value = 1;
+    revealFrameId = 0;
+  };
+  revealFrameId = requestAnimationFrame((time) => {
+    updateReveal(time);
+    revealTimeoutId = window.setTimeout(() => {
+      if (revealFrameId) {
+        cancelAnimationFrame(revealFrameId);
+        revealFrameId = 0;
+      }
+      revealProgress.value = 1;
+      revealDone.value = true;
+      revealTimeoutId = 0;
+    }, revealDoneDelayMs);
+  });
 }
 
 function handleImageError(): void {
-  imageLoaded.value = false;
+  resetImageState();
   imageFailed.value = true;
 }
 
-function paletteForSeed(seed: number): { color1: string; color2: string; color3: string; pixelFilter: number } {
-  const palettes = [
-    ['#181e57', '#03030a', '#754261'],
-    ['#26413f', '#090b09', '#b75b37'],
-    ['#33214d', '#08050d', '#c69342'],
-    ['#12395f', '#030811', '#6e2f4a'],
-    ['#492a1f', '#0d0705', '#24534d'],
-    ['#24315e', '#070915', '#b94c63']
-  ] as const;
-  const palette = palettes[seed % palettes.length] ?? palettes[0];
-  return {
-    color1: palette[0],
-    color2: palette[1],
-    color3: palette[2],
-    pixelFilter: 620 + (seed % 180)
-  };
+function resetImageState(): void {
+  cancelRevealTimers();
+  imageFailed.value = false;
+  imageLoaded.value = false;
+  revealProgress.value = 0;
+  revealDone.value = false;
+}
+
+function cancelRevealTimers(): void {
+  if (revealFrameId) {
+    cancelAnimationFrame(revealFrameId);
+    revealFrameId = 0;
+  }
+  if (revealTimeoutId) {
+    window.clearTimeout(revealTimeoutId);
+    revealTimeoutId = 0;
+  }
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function createSpiralClipPath(progress: number): string {
+  const p = clamp(progress, 0, 1);
+  if (p >= 0.985) {
+    return 'inset(0)';
+  }
+
+  const points: string[] = [];
+  const steps = 112;
+  const maxRadius = 92;
+  const baseRadius = Math.pow(p, 0.72) * maxRadius;
+  const swirlPhase = p * Math.PI * 4.6;
+  const turbulence = Math.max(0.08, 1 - p) * 0.18;
+
+  for (let index = 0; index <= steps; index += 1) {
+    const turn = index / steps;
+    const angle = -Math.PI / 2 + turn * Math.PI * 2;
+    const swirl =
+      Math.sin(angle * 2.35 - swirlPhase) * turbulence +
+      Math.sin(angle * 5.15 + swirlPhase * 0.62) * turbulence * 0.42;
+    const leadingArm = Math.sin((turn - p * 1.25) * Math.PI * 2) * (1 - p) * 0.1;
+    const radius = baseRadius * clamp(1 + swirl + leadingArm, 0.16, 1.18);
+    const x = 50 + Math.cos(angle + (1 - p) * 0.72) * radius;
+    const y = 50 + Math.sin(angle + (1 - p) * 0.72) * radius;
+    points.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+  }
+
+  return `polygon(${points.join(', ')})`;
+}
+
+function easeInOutCubic(value: number): number {
+  return value < 0.5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 </script>
 
@@ -119,9 +216,7 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
       :color1="balatroPalette.color1"
       :color2="balatroPalette.color2"
       :color3="balatroPalette.color3"
-      :is-rotate="false"
-      :mouse-interaction="true"
-      :pixel-filter="balatroPalette.pixelFilter"
+      :seed="item.visualSeed"
     />
     <img
       v-if="item.imageUrl && !imageFailed"
@@ -129,6 +224,7 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
       :class="{ 'is-loaded': showImage }"
       :alt="item.title"
       :src="item.imageUrl"
+      :style="imageRevealStyle"
       draggable="false"
       @error="handleImageError"
       @load="handleImageLoad"
@@ -145,7 +241,7 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
         rel="noreferrer"
         target="_blank"
         data-no-pan="true"
-        @click.stop
+        @click.prevent.stop="openExternal(item.repositoryUrl)"
         @keydown.stop
       >
         {{ item.authorId }}
@@ -170,10 +266,12 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
   overflow: hidden;
   inline-size: var(--gallery-card-width, 416px);
   block-size: var(--gallery-card-height, 260px);
-  border: 1px solid oklch(0.86 0.006 110);
+  border: 1px solid oklch(0.68 0.065 220 / 24%);
   border-radius: 8px;
-  background: oklch(0.94 0.006 110);
-  box-shadow: 0 12px 32px oklch(0.18 0.006 110 / 6%);
+  background: oklch(0.08 0.018 245 / 72%);
+  box-shadow:
+    0 16px 38px oklch(0.02 0.018 255 / 34%),
+    inset 0 1px 0 oklch(0.86 0.06 210 / 12%);
   cursor: pointer;
   outline: none;
   transform-origin: center;
@@ -186,14 +284,17 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
 .gallery-card:hover,
 .gallery-card:focus-visible {
   z-index: 5;
-  border-color: oklch(0.22 0.004 110);
-  box-shadow: 0 24px 58px oklch(0.16 0.006 110 / 14%);
+  border-color: oklch(0.78 0.11 205 / 42%);
+  box-shadow:
+    0 22px 60px oklch(0.02 0.018 255 / 44%),
+    0 0 42px oklch(0.72 0.12 205 / 12%),
+    inset 0 1px 0 oklch(0.88 0.08 205 / 18%);
   transform: scale(1.1);
 }
 
 .gallery-card__image {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   inset: 0;
   display: block;
   inline-size: 100%;
@@ -201,8 +302,9 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
   border-radius: inherit;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 80ms ease;
   user-select: none;
+  will-change: clip-path;
 }
 
 .gallery-card__image.is-loaded {
@@ -210,12 +312,12 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
 }
 
 .gallery-card__backdrop {
-  z-index: 0;
+  z-index: 1;
 }
 
 .gallery-card__shade {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   inset: 0;
   border-radius: inherit;
   background:
@@ -232,7 +334,7 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
 
 .gallery-card__meta {
   position: absolute;
-  z-index: 4;
+  z-index: 5;
   inset-inline: 14px;
   inset-block-end: 14px;
   display: flex;
@@ -245,7 +347,7 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
 .gallery-card__state,
 .gallery-card__warning {
   position: absolute;
-  z-index: 5;
+  z-index: 6;
   inset-block-start: 14px;
   display: inline-flex;
   max-inline-size: 178px;
@@ -373,6 +475,16 @@ function paletteForSeed(seed: number): { color1: string; color2: string; color3:
   .gallery-card__open {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-card__image {
+    transition: none;
+  }
+
+  .gallery-card__image.is-revealed {
+    clip-path: none;
   }
 }
 </style>
