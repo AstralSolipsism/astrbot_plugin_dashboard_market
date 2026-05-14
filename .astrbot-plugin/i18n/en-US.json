@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "display_name": "Dashboard Market",
+    "short_desc": "Install custom AstrBot dashboards from market.outlune.com.",
+    "desc": "Browse AstrBot Dashboard Market and install custom dashboards with backup and restore."
+  },
+  "pages": {
+    "market": {
+      "title": "Dashboard Market",
+      "description": "Browse and install verified custom dashboards."
+    }
+  }
+}
+

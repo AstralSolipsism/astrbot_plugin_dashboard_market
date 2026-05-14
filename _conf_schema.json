@@ -1,0 +1,27 @@
+{
+  "market_base_url": {
+    "description": "Dashboard market base URL",
+    "type": "string",
+    "hint": "Default: https://market.outlune.com",
+    "default": "https://market.outlune.com"
+  },
+  "request_timeout_sec": {
+    "description": "Network request timeout seconds",
+    "type": "int",
+    "hint": "Used when loading the market registry and downloading dashboard artifacts.",
+    "default": 30
+  },
+  "max_backups": {
+    "description": "Maximum backups to keep",
+    "type": "int",
+    "hint": "Oldest backups are removed after a successful install.",
+    "default": 5
+  },
+  "max_artifact_mb": {
+    "description": "Maximum dashboard artifact size in MB",
+    "type": "int",
+    "hint": "Downloads larger than this limit are rejected before installation.",
+    "default": 256
+  }
+}
+

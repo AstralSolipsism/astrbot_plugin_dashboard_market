@@ -1,0 +1,9 @@
+name: astrbot_plugin_dashboard_market
+display_name: Dashboard Market
+author: Outlune
+desc: Browse AstrBot Dashboard Market and install custom dashboards with backup and restore.
+short_desc: Install custom AstrBot dashboards from market.outlune.com.
+version: 0.1.0
+repo: https://github.com/AstralSolipsism/astrbot_plugin_dashboard_market
+astrbot_version: ">=4.24.2"
+
