@@ -2,8 +2,8 @@
   "market_base_url": {
     "description": "Dashboard market base URL",
     "type": "string",
-    "hint": "Default: https://market.outlune.com",
-    "default": "https://market.outlune.com"
+    "hint": "Default: https://market.astrbot.moe",
+    "default": "https://market.astrbot.moe"
   },
   "request_timeout_sec": {
     "description": "Network request timeout seconds",

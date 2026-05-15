@@ -9,7 +9,7 @@ from .installer import DashboardInstaller
 from .market import MarketClient, artifact_url, installable_dashboards, select_installable_dashboard
 
 
-DEFAULT_MARKET_BASE_URL = "https://market.outlune.com"
+DEFAULT_MARKET_BASE_URL = "https://market.astrbot.moe"
 
 
 class DashboardMarketService:

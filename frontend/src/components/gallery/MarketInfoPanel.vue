@@ -5,7 +5,7 @@ import { useI18n } from '../../composables/useI18n';
 import ModalShell from '../ModalShell.vue';
 
 const repoUrl = 'https://github.com/AstralSolipsism/astrbot_dashboard_market';
-const registryUrl = 'https://market.outlune.com/api/dashboards?installable=true';
+const registryUrl = 'https://market.astrbot.moe/api/dashboards?installable=true';
 
 const props = defineProps<{
   lastUpdatedAt: string;
