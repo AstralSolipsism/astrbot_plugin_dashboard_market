@@ -362,4 +362,54 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
     flex-direction: column;
   }
 }
+
+@media (max-height: 700px) {
+  .install-manager {
+    block-size: calc(100dvh - 16px);
+  }
+
+  .install-manager__header {
+    gap: 10px;
+    padding: 14px 54px 12px 14px;
+  }
+
+  .install-manager__header div {
+    gap: 5px;
+  }
+
+  .install-manager__header h2 {
+    font-size: 20px;
+  }
+
+  .install-manager__state {
+    min-block-size: 28px;
+    font-size: 11px;
+    padding-inline: 10px;
+  }
+
+  .install-manager__summary div {
+    gap: 5px;
+    min-block-size: 76px;
+    padding: 10px 12px;
+  }
+
+  .install-manager__summary dd {
+    font-size: 13px;
+  }
+
+  .install-manager__backups {
+    gap: 8px;
+    padding: 12px 14px 14px;
+  }
+
+  .install-manager__backup {
+    padding: 10px;
+  }
+
+  .install-manager__backup button {
+    min-block-size: 32px;
+    font-size: 12px;
+    padding-inline: 12px;
+  }
+}
 </style>

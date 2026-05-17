@@ -401,7 +401,7 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   grid-template-rows: auto minmax(0, 1fr);
   min-block-size: 0;
   gap: 12px;
-  overflow: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
   padding: 12px 14px 14px;
   scrollbar-color: oklch(0.7 0.13 205 / 44%) transparent;
@@ -535,6 +535,120 @@ function labelForInstallState(state: DashboardInstallDisplayState): string {
   .dashboard-detail__actions a,
   .dashboard-detail__actions button {
     flex: 1 1 136px;
+  }
+}
+
+@media (max-height: 720px) {
+  .dashboard-detail {
+    block-size: calc(100dvh - 16px);
+  }
+
+  .dashboard-detail__header {
+    grid-template-columns: minmax(150px, 208px) minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px 52px 9px 10px;
+  }
+
+  .dashboard-detail__cover-empty {
+    min-block-size: 96px;
+  }
+
+  .dashboard-detail__intro {
+    gap: 7px;
+  }
+
+  .dashboard-detail__badges,
+  .dashboard-detail__actions {
+    gap: 5px;
+  }
+
+  .dashboard-detail__state,
+  .dashboard-detail__status,
+  .dashboard-detail__version {
+    min-block-size: 24px;
+    font-size: 11px;
+    padding-inline: 8px;
+  }
+
+  .dashboard-detail__title {
+    gap: 4px;
+  }
+
+  .dashboard-detail__title h2 {
+    font-size: 22px;
+    line-height: 1.04;
+  }
+
+  .dashboard-detail__title p {
+    font-size: 12px;
+    line-height: 1.34;
+  }
+
+  .dashboard-detail__actions a,
+  .dashboard-detail__actions button {
+    min-block-size: 30px;
+    font-size: 11px;
+    padding-inline: 10px;
+  }
+
+  .dashboard-detail__content {
+    grid-template-rows: auto minmax(218px, 1fr);
+    gap: 8px;
+    padding: 8px 10px 10px;
+  }
+
+  .dashboard-detail__info-grid {
+    gap: 8px;
+  }
+
+  .dashboard-detail__section {
+    gap: 6px;
+    border-radius: 10px;
+    padding: 7px;
+  }
+
+  .dashboard-detail__facts div {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .dashboard-detail__facts dt,
+  .dashboard-detail__facts dd,
+  .dashboard-detail__section h3 {
+    font-size: 11px;
+  }
+
+  .dashboard-detail__coverage span {
+    min-block-size: 34px;
+    font-size: 11px;
+    padding: 6px;
+  }
+}
+
+@media (max-height: 580px) {
+  .dashboard-detail__header {
+    grid-template-columns: minmax(126px, 164px) minmax(0, 1fr);
+    padding: 8px 48px 8px 8px;
+  }
+
+  .dashboard-detail__title h2 {
+    font-size: 19px;
+  }
+
+  .dashboard-detail__title p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .dashboard-detail__content {
+    grid-template-rows: auto minmax(184px, 1fr);
+  }
+
+  .dashboard-detail__info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

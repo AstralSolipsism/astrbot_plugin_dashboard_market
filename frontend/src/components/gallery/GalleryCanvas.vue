@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import type { DashboardInstallDisplayState, DashboardRegistryVersion, MediaAsset } from '../../types/market';
 import { useI18n } from '../../composables/useI18n';
 import { useInfiniteCanvas } from '../../composables/useInfiniteCanvas';
+import { useResponsiveGalleryLayout } from '../../composables/useResponsiveGalleryLayout';
 import type { GalleryItem } from '../../types/gallery';
 import GalaxyBackdrop from './GalaxyBackdrop.vue';
 import GalleryCard from './GalleryCard.vue';
@@ -39,11 +40,6 @@ const emit = defineEmits<{
   select: [item: GalleryItem];
   submit: [];
 }>();
-
-const gridStep = {
-  x: 480,
-  y: 324
-};
 
 const marketRepoUrl = 'https://github.com/AstralSolipsism/astrbot_dashboard_market';
 const gridSlots = createGridSlots();
@@ -153,6 +149,8 @@ const fallbackPlaceholder: PlaceholderSeed = {
 };
 
 const { t } = useI18n();
+const canvasRef = useTemplateRef<HTMLElement>('canvas');
+const { layout, layoutStyle } = useResponsiveGalleryLayout(canvasRef);
 const { isDragging, onPointerDown, onPointerMove, onPointerUp, onWheel, planeStyle, shouldSuppressClick } =
   useInfiniteCanvas();
 
@@ -251,10 +249,11 @@ function positionFor(index: number): { x: number; y: number } {
   const slot = gridSlots[index % gridSlots.length] ?? { col: 0, row: 0 };
   const ring = Math.floor(index / gridSlots.length);
   const ringDirection = index % 2 === 0 ? 1 : -1;
+  const { gridX, gridY } = layout.value;
 
   return {
-    x: (slot.col + ring * 17 * ringDirection) * gridStep.x,
-    y: slot.row * gridStep.y
+    x: (slot.col + ring * 17 * ringDirection) * gridX,
+    y: slot.row * gridY
   };
 }
 
@@ -308,8 +307,11 @@ function selectItem(item: GalleryItem): void {
 
 <template>
   <section
+    ref="canvas"
     class="gallery-canvas"
     :class="{ 'is-dragging': isDragging }"
+    :data-compact="layout.navCompact"
+    :style="layoutStyle"
     :aria-label="t('gallery.label')"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
@@ -357,8 +359,10 @@ function selectItem(item: GalleryItem): void {
 
 <style scoped>
 .gallery-canvas {
+  --gallery-scale: 1;
   --gallery-card-width: 416px;
   --gallery-card-height: 260px;
+  --gallery-card-hover-scale: 1.1;
   --gallery-grid-x: 480px;
   --gallery-grid-y: 324px;
   position: fixed;

@@ -280,4 +280,22 @@ function restoreFocus(): void {
     border-radius: 10px;
   }
 }
+
+@media (max-height: 680px) {
+  .modal-shell {
+    padding: 8px;
+  }
+
+  .modal-shell__panel {
+    max-block-size: calc(100dvh - 16px);
+  }
+
+  .modal-shell__close {
+    inset-block-start: 10px;
+    inset-inline-end: 10px;
+    inline-size: 32px;
+    block-size: 32px;
+    font-size: 16px;
+  }
+}
 </style>

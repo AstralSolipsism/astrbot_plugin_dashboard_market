@@ -205,4 +205,69 @@ function formatTimestamp(value: string): string {
     inline-size: 46px;
   }
 }
+
+@media (max-width: 980px), (max-height: 660px) {
+  .gallery-nav {
+    inset-block-start: 14px;
+    inset-inline: 14px;
+  }
+
+  .gallery-nav__pill {
+    max-inline-size: calc(100vw - 112px);
+    min-block-size: 38px;
+    padding: 4px;
+  }
+
+  .gallery-nav__pill button,
+  .gallery-nav__pill span,
+  .gallery-nav__locale,
+  .gallery-nav__github {
+    min-block-size: 30px;
+    font-size: 12px;
+  }
+
+  .gallery-nav__pill button,
+  .gallery-nav__locale {
+    padding-inline: 11px;
+  }
+
+  .gallery-nav__pill span {
+    padding-inline: 9px;
+  }
+
+  .gallery-nav__updated,
+  .gallery-nav__pill span:nth-of-type(2) {
+    display: none;
+  }
+
+  .gallery-nav__github {
+    inline-size: 38px;
+    block-size: 38px;
+  }
+
+  .gallery-nav__github-icon {
+    inline-size: 19px;
+    block-size: 19px;
+  }
+}
+
+@media (max-width: 520px), (max-height: 560px) {
+  .gallery-nav {
+    inset-block-start: 10px;
+    inset-inline: 10px;
+  }
+
+  .gallery-nav__pill {
+    max-inline-size: calc(100vw - 92px);
+  }
+
+  .gallery-nav__pill span {
+    display: none;
+  }
+
+  .gallery-nav__github {
+    inline-size: 36px;
+    block-size: 36px;
+  }
+}
 </style>

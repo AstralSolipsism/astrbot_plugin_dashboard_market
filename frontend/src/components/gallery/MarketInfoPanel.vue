@@ -305,4 +305,60 @@ function formatTimestamp(value: string): string {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-height: 700px) {
+  .market-info-panel {
+    block-size: calc(100dvh - 16px);
+  }
+
+  .market-info-panel__header {
+    gap: 12px;
+    padding: 14px 54px 12px 14px;
+  }
+
+  .market-info-panel__header div {
+    gap: 6px;
+  }
+
+  .market-info-panel__header h2 {
+    font-size: 24px;
+  }
+
+  .market-info-panel__header p {
+    font-size: 13px;
+    line-height: 1.38;
+  }
+
+  .market-info-panel__actions button,
+  .market-info-panel__actions a {
+    min-block-size: 32px;
+    font-size: 12px;
+    padding-inline: 12px;
+  }
+
+  .market-info-panel__body {
+    gap: 10px;
+    padding: 12px 14px 14px;
+  }
+
+  .market-info-panel__stats div {
+    gap: 6px;
+    min-block-size: 70px;
+    padding: 10px;
+  }
+
+  .market-info-panel__stats dd {
+    font-size: 18px;
+  }
+
+  .market-info-panel__grid {
+    gap: 8px;
+  }
+
+  .market-info-panel__grid article,
+  .market-info-panel__quality {
+    gap: 7px;
+    padding: 11px;
+  }
+}
 </style>

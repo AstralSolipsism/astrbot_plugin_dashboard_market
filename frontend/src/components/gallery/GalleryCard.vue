@@ -267,7 +267,7 @@ function clamp(value: number, min: number, max: number): number {
   inline-size: var(--gallery-card-width, 416px);
   block-size: var(--gallery-card-height, 260px);
   border: 1px solid oklch(0.68 0.065 220 / 24%);
-  border-radius: 8px;
+  border-radius: var(--gallery-card-radius, 8px);
   background: oklch(0.08 0.018 245 / 72%);
   box-shadow:
     0 16px 38px oklch(0.02 0.018 255 / 34%),
@@ -289,7 +289,7 @@ function clamp(value: number, min: number, max: number): number {
     0 22px 60px oklch(0.02 0.018 255 / 44%),
     0 0 42px oklch(0.72 0.12 205 / 12%),
     inset 0 1px 0 oklch(0.88 0.08 205 / 18%);
-  transform: scale(1.1);
+  transform: scale(var(--gallery-card-hover-scale, 1.1));
 }
 
 .gallery-card__image {
@@ -335,12 +335,12 @@ function clamp(value: number, min: number, max: number): number {
 .gallery-card__meta {
   position: absolute;
   z-index: 5;
-  inset-inline: 14px;
-  inset-block-end: 14px;
+  inset-inline: var(--gallery-card-inset, 14px);
+  inset-block-end: var(--gallery-card-inset, 14px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--gallery-card-meta-gap, 10px);
   pointer-events: none;
 }
 
@@ -348,10 +348,10 @@ function clamp(value: number, min: number, max: number): number {
 .gallery-card__warning {
   position: absolute;
   z-index: 6;
-  inset-block-start: 14px;
+  inset-block-start: var(--gallery-card-inset, 14px);
   display: inline-flex;
-  max-inline-size: 178px;
-  min-block-size: 30px;
+  max-inline-size: var(--gallery-card-badge-max-width, 178px);
+  min-block-size: var(--gallery-card-badge-height, 30px);
   align-items: center;
   border-radius: 999px;
   overflow: hidden;
@@ -361,13 +361,13 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 .gallery-card__state {
-  inset-inline-start: 14px;
+  inset-inline-start: var(--gallery-card-inset, 14px);
   background: oklch(0.18 0.004 110 / 88%);
   color: oklch(0.98 0.006 110);
-  font-size: 12px;
+  font-size: var(--gallery-card-font-size, 12px);
   font-weight: 760;
   letter-spacing: 0;
-  padding-inline: 11px;
+  padding-inline: clamp(8px, var(--gallery-card-inset, 14px), 11px);
 }
 
 .gallery-card__state[data-state="current"] {
@@ -381,24 +381,24 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 .gallery-card__warning {
-  inset-inline-end: 14px;
+  inset-inline-end: var(--gallery-card-inset, 14px);
   background: oklch(0.96 0.04 32 / 88%);
   color: oklch(0.38 0.09 28);
-  font-size: 12px;
+  font-size: var(--gallery-card-font-size, 12px);
   font-weight: 730;
   letter-spacing: 0;
-  padding-inline: 11px;
+  padding-inline: clamp(8px, var(--gallery-card-inset, 14px), 11px);
 }
 
 .gallery-card__author,
 .gallery-card__open {
   display: inline-flex;
-  min-block-size: 34px;
+  min-block-size: var(--gallery-card-control-height, 34px);
   align-items: center;
   border-radius: 999px;
   background: oklch(0.98 0.006 110 / 88%);
   color: oklch(0.15 0.004 110);
-  font-size: 12px;
+  font-size: var(--gallery-card-font-size, 12px);
   font-weight: 720;
   letter-spacing: 0;
   line-height: 1;
@@ -408,10 +408,10 @@ function clamp(value: number, min: number, max: number): number {
 
 .gallery-card__author {
   min-inline-size: 0;
-  max-inline-size: 220px;
+  max-inline-size: min(220px, calc(var(--gallery-card-width, 416px) - 112px));
   overflow: hidden;
   opacity: 0;
-  padding-inline: 13px;
+  padding-inline: clamp(9px, var(--gallery-card-inset, 14px), 13px);
   text-overflow: ellipsis;
   text-decoration: none;
   transform: translateY(8px);
@@ -426,7 +426,7 @@ function clamp(value: number, min: number, max: number): number {
   flex: 0 0 auto;
   border: 0;
   opacity: 0;
-  padding-inline: 13px;
+  padding-inline: clamp(9px, var(--gallery-card-inset, 14px), 13px);
   transform: translateY(8px);
   transition:
     background-color 160ms ease,
