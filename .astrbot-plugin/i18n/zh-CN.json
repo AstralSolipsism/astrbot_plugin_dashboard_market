@@ -1,17 +1,17 @@
 {
   "metadata": {
     "display_name": "Dashboard 市场",
-    "short_desc": "从 market.outlune.com 安装自定义 AstrBot Dashboard。",
+    "short_desc": "从 market.astrbot.moe 安装自定义 AstrBot Dashboard。",
     "desc": "浏览 AstrBot Dashboard 市场，并通过备份与恢复机制安装自定义面板。"
   },
   "config": {
     "market_base_url": {
       "description": "Dashboard 市场地址",
-      "hint": "默认值：https://market.outlune.com"
+      "hint": "默认值：https://market.astrbot.moe"
     },
     "request_timeout_sec": {
       "description": "网络请求超时秒数",
-      "hint": "用于加载市场列表和下载 dashboard 发布包。"
+      "hint": "用于加载市场列表和下载 Dashboard 发布包。"
     },
     "max_backups": {
       "description": "最多保留备份数",

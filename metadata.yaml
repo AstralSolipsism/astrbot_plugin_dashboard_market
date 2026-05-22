@@ -1,8 +1,8 @@
 name: astrbot_plugin_dashboard_market
-display_name: Dashboard Market
+display_name: Dashboard 市场
 author: Outlune
-desc: Browse AstrBot Dashboard Market and install custom dashboards with backup and restore.
-short_desc: Install custom AstrBot dashboards from market.astrbot.moe.
+desc: 浏览 AstrBot Dashboard 市场，并通过备份与恢复机制安装自定义面板。
+short_desc: 从 market.astrbot.moe 安装自定义 AstrBot Dashboard。
 version: 0.1.0
 repo: https://github.com/AstralSolipsism/astrbot_plugin_dashboard_market
 astrbot_version: ">=4.24.2"

@@ -1,26 +1,26 @@
 {
   "market_base_url": {
-    "description": "Dashboard market base URL",
+    "description": "Dashboard 市场地址",
     "type": "string",
-    "hint": "Default: https://market.astrbot.moe",
+    "hint": "默认值：https://market.astrbot.moe",
     "default": "https://market.astrbot.moe"
   },
   "request_timeout_sec": {
-    "description": "Network request timeout seconds",
+    "description": "网络请求超时秒数",
     "type": "int",
-    "hint": "Used when loading the market registry and downloading dashboard artifacts.",
+    "hint": "用于加载市场列表和下载 Dashboard 发布包。",
     "default": 30
   },
   "max_backups": {
-    "description": "Maximum backups to keep",
+    "description": "最多保留备份数",
     "type": "int",
-    "hint": "Oldest backups are removed after a successful install.",
+    "hint": "每次成功安装后会清理最旧备份。",
     "default": 5
   },
   "max_artifact_mb": {
-    "description": "Maximum dashboard artifact size in MB",
+    "description": "Dashboard 发布包大小上限 MB",
     "type": "int",
-    "hint": "Downloads larger than this limit are rejected before installation.",
+    "hint": "超过该大小的发布包会被拒绝安装。",
     "default": 256
   }
 }

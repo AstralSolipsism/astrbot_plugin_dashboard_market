@@ -1,8 +1,26 @@
 {
   "metadata": {
     "display_name": "Dashboard Market",
-    "short_desc": "Install custom AstrBot dashboards from market.outlune.com.",
+    "short_desc": "Install custom AstrBot dashboards from market.astrbot.moe.",
     "desc": "Browse AstrBot Dashboard Market and install custom dashboards with backup and restore."
+  },
+  "config": {
+    "market_base_url": {
+      "description": "Dashboard market base URL",
+      "hint": "Default: https://market.astrbot.moe"
+    },
+    "request_timeout_sec": {
+      "description": "Network request timeout seconds",
+      "hint": "Used when loading the market registry and downloading Dashboard artifacts."
+    },
+    "max_backups": {
+      "description": "Maximum backups to keep",
+      "hint": "Oldest backups are removed after a successful install."
+    },
+    "max_artifact_mb": {
+      "description": "Maximum Dashboard artifact size in MB",
+      "hint": "Downloads larger than this limit are rejected before installation."
+    }
   },
   "pages": {
     "market": {
